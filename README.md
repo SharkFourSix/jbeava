@@ -209,7 +209,7 @@ Jbeava.addFactory(new MyFactory());
     - in: Object
     - out: Object
     
-- `enum` - This filter uses returns the enum constant of the given FQCN.
+- `enum` - This filter returns the enum constant of the given FQCN.
     - in: String
     - out: Enum
     - args:
