@@ -21,9 +21,9 @@ public class StringTemplateEngine {
         StringBuilder stringBuilder;
         final List<TokenGroup> tokenGroups;
 
+        Objects.requireNonNull(template, "Template string cannot be null.");
         tokenGroups = this.tokenize(template);
         stringBuilder = new StringBuilder();
-        Objects.requireNonNull(template, "Template string cannot be null.");
 
         // Here we use a pull approach that way values from the model cannot conflict with names and or values
         // of other variables.
