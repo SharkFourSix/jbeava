@@ -4,21 +4,21 @@ jbeava (Java Bean Validator)
 
 ## Background
 
-Data input lib.gintec_rdl.jbeava.validation is one the most overlooked issues in Software Development by junior developers and seniors alike.
+Data input validation is one the most overlooked issues in Software Development by junior developers and seniors alike.
 A lot of code that I have come across does not really do a good job of validating input data. This is usually indicative
  of the fact that a lot of people do not design their systems, rather opt to go straight to coding. One very important
  benefit of designing a system before developing it is that you get to discover all your edge cases much earlier, which
- in turn aids you in formulating your data lib.gintec_rdl.jbeava.validation rules. Once all edge cases have been identified, it then
- becomes easier to organize your logic: From capturing input, lib.gintec_rdl.jbeava.validation, transformation and normalization,
+ in turn aids you in formulating your data validation rules. Once all edge cases have been identified, it then
+ becomes easier to organize your logic: From capturing input, validation, transformation and normalization,
  processing, and storage and retrieval.
 
-_There are already plenty of lib.gintec_rdl.jbeava.validation libraries, so why another one?_ Well, why not? On a serious note, I am very
- much aware of this fact and the existence of JSR 303. I found most of the libraries to be not as technically intuitive
- as I would have liked them to be and hence the birth of **jbeava**.
+_There are already plenty of validation libraries, so why another one?_ Well, why not? On a serious note, I am very
+ much aware of this fact as well as the existence of JSR 303. I found most of the libraries to be not as technically 
+ intuitive as I would have liked them to be and hence the birth of **jbeava**.
 
 ## Technical Details
 
-Validation takes place inside [filters](jbeava-commons/src/main/java/lib.gintec_rdl.jbeava.validation/ValidationFilter.java).
+Validation takes place inside [filters](jbeava-commons/src/main/java/lib/gintec_rdl/jbeava/validation/ValidationFilter.java).
  The primary function of the filters is to validate input data passed to the filters.
 
 Filters must return a value, which could be the very same input value or its transformed derivative. Thus, we have two
@@ -66,14 +66,16 @@ There's also a resolver for [Spark-Java](https://github.com/perwendel/spark)
 ### Interoperability
 
 **jbeava** can be plugged into any environment through 
-    the use of [FieldResolver](jbeava-commons/src/main/java/lib.gintec_rdl.jbeava.validation/FieldResolver.java) which provides a 
-    conduit for passing data from various sources. Data input sources could be files, HTTP forms, REST services, etc.
+    the use of [FieldResolver](jbeava-commons/src/main/java/lib/gintec_rdl/jbeava/validation/FieldResolver.java) which 
+    provides a conduit for passing data from various sources. Data input sources could be files, 
+    HTTP forms, REST services, etc.
 
 ### Extensibility
 
 Extending the functionality of jbeava is easy. 
-    Simply implement [ValidationFilter](jbeava-commons/src/main/java/lib.gintec_rdl.jbeava.validation/ValidationFilter.java) 
-    then register your filter [factory](jbeava-commons/src/main/java/lib.gintec_rdl.jbeava.validation/ValidatorFactory.java) class and jbeava will handle the rest.
+    Simply implement [ValidationFilter](jbeava-commons/src/main/java/lib/gintec_rdl/jbeava/validation/ValidationFilter.java) 
+    then register your filter [factory](jbeava-commons/src/main/java/lib/gintec_rdl/jbeava/validation/ValidatorFactory.java) 
+    class and jbeava will handle the rest.
 
 ```java
 Jbeava.addFactory(new MyFactory());
@@ -382,7 +384,7 @@ Validation starts when you call `Jbeava.validate(...)`, which returns
 The library comes with a simple expression parsing engine that provides the easiness of specifying custom error 
     messages.
 
-You can reference the name and value of each target field by using variable placeholders like so. Below is on example:
+You can reference the name and value of each target field by using variable placeholders like so. Below is one example:
 
 ```java
 @Filter(
@@ -392,6 +394,17 @@ You can reference the name and value of each target field by using variable plac
 )
 String firstName;
 ```
+
+For filters that have parameters, you can reference arguments using `${arg1}` or `${arg2}` and so on, depending on how
+    many parameters the filter takes.
+    
+The following references are guaranteed to exist:
+
+    - ${name}
+    - ${value}
+    - ${arg} - Only if suppled.
+    
+Some filters also provide their own variables that can be referenced in error messages.
 
 ### Caveats
 
