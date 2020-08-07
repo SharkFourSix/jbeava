@@ -402,7 +402,7 @@ The following references are guaranteed to exist:
 
     - ${name}
     - ${value}
-    - ${arg} - Only if suppled.
+    - ${arg*} - Only if supplied.
     
 Some filters also provide their own variables that can be referenced in error messages.
 
