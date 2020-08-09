@@ -39,7 +39,7 @@ public enum Jbeava {
             throw new JBeavaException("Invalid filter name " + filterName);
         }
 
-        factoryIterator = factoryMap.values().iterator();
+        factoryIterator = _$.factoryMap.values().iterator();
         while (factoryIterator.hasNext()) {
             ValidationFilter<?, ?> filter = factoryIterator.next().get(filterName);
             if (filter != null) {
@@ -51,11 +51,12 @@ public enum Jbeava {
 
     private ValidationResults validate0(Class<?> c, FieldResolver fieldResolver, Options options) {
         ValidationResults results;
-        List<ValidationContext> validationContexts;
-        Objects.requireNonNull(options, "Options cannot be null");
+        Iterable<ValidationContext> validationContexts;
 
         results = new ValidationResults();
-        validationContexts = createValidationContexts(c, options.depth);
+        results.typeReference = c;
+        results.contextReference = options.context;
+        validationContexts = createValidationContexts0(c, options.depth);
 
         for (ValidationContext validationContext : validationContexts) {
             Object input;
@@ -69,7 +70,7 @@ public enum Jbeava {
                 results.results.put(validationContext.getFieldName(), input);
             } catch (JBeavaException e) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Exception during lib.gintec_rdl.jbeava.validation.", e);
+                    logger.debug("Exception during validation.", e);
                 }
                 results.violations.add(e.getMessage());
                 if (options.failFast) {
@@ -86,10 +87,7 @@ public enum Jbeava {
                     instance = options.instance;
                 }
                 if (instance != null) {
-                    for (ValidationContext validationContext : validationContexts) {
-                        validationContext.setBeanValue(instance,
-                                results.results.get(validationContext.getFieldName()), options.context);
-                    }
+                    mapResultsToBean(instance, results, options.context);
                 }
                 results.bean = instance;
             }
@@ -106,7 +104,7 @@ public enum Jbeava {
         }
     }
 
-    private List<ValidationContext> createValidationContexts(Class<?> clazz, int depth) {
+    private List<ValidationContext> __createValidationContexts(Class<?> clazz, int depth) {
         Class<?> c;
         int height;
         long actualDepth;
@@ -140,7 +138,18 @@ public enum Jbeava {
         return validationContexts;
     }
 
-    private List<FilterContext> createValidationFilterContexts(String[] names) {
+    private static final Map<Class<?>, ValidationContextInfo> info = new ConcurrentHashMap<>();
+
+    private Iterable<ValidationContext> createValidationContexts0(Class<?> clazz, int depth) {
+        ValidationContextInfo contextInfo;
+
+        depth = depth < 0 ? 0xffffffff : depth;
+        contextInfo = info.computeIfAbsent(clazz, ValidationContextInfo::new);
+        contextInfo.loadContexts(depth);
+        return contextInfo.getValidationContexts();
+    }
+
+    List<FilterContext> createValidationFilterContexts(String[] names) {
         List<FilterContext> filterContexts;
 
         filterContexts = new LinkedList<>();
@@ -170,18 +179,28 @@ public enum Jbeava {
         return filterContexts;
     }
 
-    private boolean hasParameters(String filter) {
+    private static boolean hasParameters(String filter) {
         int firstIndex, lastIndex;
         firstIndex = filter.indexOf('(');
         lastIndex = filter.lastIndexOf(')');
         return firstIndex != -1 && lastIndex != -1;
     }
 
-    private String format(String msg, Object... args) {
+    String format(String msg, Object... args) {
         return String.format(Locale.US, msg, args);
     }
 
     public static ValidationResults validate(Class<?> clazz, FieldResolver fieldResolver, Options options) {
         return _$.validate0(clazz, fieldResolver, options);
+    }
+
+    static void mapResultsToBean(Object bean, ValidationResults results, int context) {
+        ValidationContextInfo contexts;
+
+        if ((contexts = info.get(bean.getClass())) != null) {
+            for (ValidationContext validationContext : contexts.getValidationContexts()) {
+                validationContext.setBeanValue(bean, results.results.get(validationContext.getFieldName()), context);
+            }
+        }
     }
 }

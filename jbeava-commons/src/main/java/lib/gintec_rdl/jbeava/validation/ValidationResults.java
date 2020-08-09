@@ -8,6 +8,8 @@ import java.util.Map;
 public final class ValidationResults {
     Object bean;
     boolean success;
+    int contextReference;
+    Class<?> typeReference;
     final List<String> violations;
     final Map<String, Object> raw;
     final Map<String, Object> results;
@@ -55,5 +57,29 @@ public final class ValidationResults {
 
     public List<String> getViolations() {
         return violations;
+    }
+
+    /**
+     * Updates the given bean with the validated fields. The bean type must match the type used for validation.
+     * <p>
+     * This method will only map the fields specific to the current validation {@link #getContext() context}.
+     * </p>
+     *
+     * @param bean Maps the results
+     */
+    public void updateBean(Object bean) {
+        if (bean.getClass() != typeReference) {
+            throw new IllegalArgumentException("Bean must be of type " + typeReference);
+        }
+        Jbeava.mapResultsToBean(bean, this, contextReference);
+    }
+
+    /**
+     * Returns the validation context
+     *
+     * @return .
+     */
+    public int getContext() {
+        return contextReference;
     }
 }

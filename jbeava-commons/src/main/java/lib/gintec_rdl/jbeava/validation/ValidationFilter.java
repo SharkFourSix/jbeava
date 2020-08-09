@@ -5,7 +5,7 @@ import lib.gintec_rdl.jbeava.validation.exceptions.JBeavaException;
 import java.util.List;
 
 /**
- * <p>This is where it's at. The main heart of the lib.gintec_rdl.jbeava.validation library.</p>
+ * <p>This is where it's at. The main heart of the validation library.</p>
  *
  * @param <In>  The expected input type. The benefit of generics here is that it imposes type restrictions in cases
  *              where filters are chained. Certain filters might expect data to be of a certain type only. So passing
@@ -24,7 +24,7 @@ public interface ValidationFilter<In, Out> {
      * @param args    Parameters passed to the filter function
      * @return The same object or its transformed equivalent
      * @throws JBeavaException If an exception is thrown along the calling chain. This could be a
-     *                         misconfigured filter or a lib.gintec_rdl.jbeava.validation violation
+     *                         misconfigured filter or a validation violation
      */
     Out filter(String name, String message, In value, List<String> args) throws JBeavaException;
 

@@ -29,6 +29,23 @@ Filters must return a value, which could be the very same input value or its tra
 One main advantage of this design is that filters can be chained together to complete a whole logic block without
  writing too much boilerplate code. It is also possible to have filters that both inspect and transform,
  which in fact, is what most of the prepackaged filters do.
+ 
+ ### Hierarchy Depth and Contextual Validation
+
+Jbeava is capable of validating ancestor fields, all the way up to the root class. To do this, you specify the 
+    depth value in `Options`, which instructs Jbeava how far up the inheritance chain to go.
+    
+### Implicit & Explicit mapping
+
+By default, Jbeava will instantiate a bean of the given type. This behavior can be controlled through the `Options` class.
+There are two ways of explicitly mapping beans:
+
+1. Passing an instance through `Options` class. Passing an instance will map the validated fields 
+    of the current validation context to the bean, meaning only the fields intended for the current context will be modified.
+    
+2. Mapping using `ValidationResults`, post validation. This allows updating only specific fields without 
+    affecting any other fields. For instance, you may pull an object from the database and may only want to 
+    update certain fields. 
 
 ## Usage
 
@@ -413,4 +430,4 @@ When specifying parameters to filters, i.e `length(1,200)`, the parameters must 
     
 ### TODO
 
- - [ ] Implement caching and heuristics.
+ - [x] Implement caching and heuristics.

@@ -32,7 +32,7 @@ public @interface Filter {
     int[] contexts() default {};
 
     /**
-     * @return <p>Custom message to display in case lib.gintec_rdl.jbeava.validation fails. You can make reference to field name and
+     * @return <p>Custom message to display in case validation fails. You can make reference to field name and
      * values like so: `${name}` and `${value}`.</p><p></p>
      * <p>For example: <code>"${name} is not a valid integer.</code></p>
      * <p>The following properties are guaranteed to be available for all filters:</p>

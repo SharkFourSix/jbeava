@@ -115,7 +115,6 @@ public class JbeavaTest extends TestCase {
 
     public void testValidate() {
         Person john;
-        Options options;
         Map<String, String> map;
         FieldResolver fieldResolver;
         ValidationResults validationResults;
@@ -129,8 +128,6 @@ public class JbeavaTest extends TestCase {
             put("favoriteAnimal", "duck");
         }};
 
-        options = new Options();
-        options.failFast(false);
         fieldResolver = new HttpFormDataSource(map);
 
         // add custom factory
@@ -150,5 +147,83 @@ public class JbeavaTest extends TestCase {
         assertEquals(john.getId(), 5);
         assertEquals(john.getFavColor(), "Red");
         assertEquals(john.getFavoriteAnimal(), "kcud");
+    }
+
+    static class GranPa {
+        @Filter(filters = {"required", "length(2,50)"}, label = "Last name", contexts = {1})
+        private String lastName;
+
+        @Filter(filters = {"required", "length(2,50)"}, label = "First name", contexts = {1})
+        private String firstName;
+
+        public String getLastName() {
+            return lastName;
+        }
+
+        public String getFirstName() {
+            return firstName;
+        }
+    }
+
+    public static class Pappy extends GranPa {
+        @Filter(filters = {"required", "int", "positive"})
+        private int age;
+
+        public int getAge() {
+            return age;
+        }
+    }
+
+    static public class Kid extends Pappy {
+        @Filter(filters = {"required", "long"})
+        private long id;
+
+        public long getId() {
+            return id;
+        }
+    }
+
+    public void testPostValidationMappingInheritance() {
+        Kid kid;
+        Map<String, String> map;
+        FieldResolver fieldResolver;
+        ValidationResults validationResults;
+
+        map = new LinkedHashMap<>() {{
+            put("firstName", "John");
+            put("lastName", "Doe, III");
+            put("age", "31");
+            put("id", "78");
+        }};
+
+        fieldResolver = new HttpFormDataSource(map);
+
+        // Initial validation and mapping, depth = 0
+        validationResults = Jbeava.validate(Kid.class, fieldResolver, Options.defaults());
+
+        assertTrue(validationResults.success);
+        kid = validationResults.getBean();
+        assertNull(kid.getFirstName());
+        assertNull(kid.getLastName());
+
+        validationResults = Jbeava.validate(Kid.class, fieldResolver, Options.defaults().map(true).instance(kid).depth(1));
+
+        assertTrue(validationResults.success);
+        assertEquals(kid.getAge(), 31);
+        assertNull(kid.getFirstName());
+        assertNull(kid.getLastName());
+
+        // Go the GranPa level at depth 2. Here we will only validate first name and last name.
+        // We will then update kid with the validated information without affected the previously validated data.
+        // We will manually map the results to an already existing bean.
+        validationResults = Jbeava.validate(Kid.class, fieldResolver, Options.defaults().map(false).depth(2).context(1));
+
+        assertTrue(validationResults.success);
+        // The results object already knows the validation context and the class of the bean to map to.
+        validationResults.updateBean(kid);
+
+        assertEquals(kid.getAge(), 31);
+        assertEquals("John", kid.getFirstName());
+        assertEquals("Doe, III", kid.getLastName());
     }
 }
