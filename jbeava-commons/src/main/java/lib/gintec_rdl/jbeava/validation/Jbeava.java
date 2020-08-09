@@ -1,12 +1,10 @@
 package lib.gintec_rdl.jbeava.validation;
 
-import lib.gintec_rdl.jbeava.validation.annotations.Filter;
 import lib.gintec_rdl.jbeava.validation.exceptions.JBeavaException;
 import lib.gintec_rdl.jbeava.validation.filters.DefaultValidatorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -102,40 +100,6 @@ public enum Jbeava {
             logger.error("Exception when creating bean of type {}.", type, e);
             throw new JBeavaException(e);
         }
-    }
-
-    private List<ValidationContext> __createValidationContexts(Class<?> clazz, int depth) {
-        Class<?> c;
-        int height;
-        long actualDepth;
-        List<ValidationContext> validationContexts;
-
-        c = clazz;
-        height = -1;
-        validationContexts = new LinkedList<>();
-        actualDepth = depth < 0 ? 0xffffffff : depth;
-
-        while (height < actualDepth && c != null && c != Object.class) {
-            for (Field field : c.getDeclaredFields()) {
-                if (!field.isAnnotationPresent(Filter.class)) {
-                    continue;
-                }
-                Filter filter;
-                List<FilterContext> filterContexts;
-
-                filter = field.getAnnotation(Filter.class);
-                if (filter.filters().length == 0) {
-                    throw new JBeavaException(
-                            format("At least one filter must be specified for field %s.%s.",
-                                    clazz.getCanonicalName(), field.getName()));
-                }
-                filterContexts = createValidationFilterContexts(filter.filters());
-                validationContexts.add(new ValidationContext(field, filter, filterContexts));
-            }
-            height++;
-            c = c.getSuperclass();
-        }
-        return validationContexts;
     }
 
     private static final Map<Class<?>, ValidationContextInfo> info = new ConcurrentHashMap<>();
