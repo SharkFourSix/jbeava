@@ -4,6 +4,7 @@ import lib.gintec_rdl.jbeava.validation.FieldResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
+import spark.route.HttpMethod;
 import spark.utils.IOUtils;
 
 import javax.servlet.MultipartConfigElement;
@@ -17,6 +18,8 @@ public class SparkFieldResolver extends FieldResolver {
     protected Request request;
     private final Logger logger;
     protected MultipartConfigElement mce;
+    private final HttpMethod method;
+    private final boolean multipart;
 
     /**
      * @param request The request to pull data from.
@@ -26,6 +29,8 @@ public class SparkFieldResolver extends FieldResolver {
         this.request = request;
         this.mce = mce;
         this.logger = LoggerFactory.getLogger(SparkFieldResolver.class);
+        this.method = HttpMethod.get(request.requestMethod());
+        this.multipart = request.contentType().startsWith("multipart/form-data");
     }
 
     public SparkFieldResolver(Request request) {
@@ -36,29 +41,43 @@ public class SparkFieldResolver extends FieldResolver {
         return logger;
     }
 
+    protected final HttpMethod getRequestMethod() {
+        return method;
+    }
+
+    protected final boolean isMultipart() {
+        return multipart;
+    }
+
+    protected final void configureMultipart() {
+        MultipartConfigElement config = request.attribute("org.eclipse.jetty.multipartConfig");
+        if (config == null) {
+            config = getMultipartConfiguration();
+            request.attribute("org.eclipse.jetty.multipartConfig", config);
+        }
+    }
+
     @Override
     public Object getField(String fieldName) {
-        if ("post".equalsIgnoreCase(request.requestMethod())) {
-            if (request.contentType().startsWith("multipart/form-data")) {
-                MultipartConfigElement config = request.attribute("org.eclipse.jetty.multipartConfig");
-                if (config == null) {
-                    config = getMultipartConfiguration();
+        final HttpMethod method = getRequestMethod();
+        switch (method) {
+            case post:
+                if (multipart) {
+                    configureMultipart();
+                    try {
+                        return IOUtils.toString(request.raw().getPart(fieldName).getInputStream());
+                    } catch (Exception e) {
+                        getLogger().error("Error when reading multipart form field {}.", fieldName, e);
+                        return null;
+                    }
+                } else {
+                    return request.queryParams(fieldName);
                 }
-                request.attribute("org.eclipse.jetty.multipartConfig", config);
-                try {
-                    return IOUtils.toString(request.raw().getPart(fieldName).getInputStream());
-                } catch (Exception e) {
-                    getLogger().error("Error when reading multipart form field {}.", fieldName, e);
-                    return null;
-                }
-            } else {
-                return request.queryParams(fieldName);
-            }
-        } else if ("get".equalsIgnoreCase(request.requestMethod())) {
-            return request.params(fieldName);
-        } else {
-            throw new UnsupportedOperationException(String.format(Locale.US,
-                    "Reading from %s methods is not supported.", request.requestMethod()));
+            case get:
+                return request.params(fieldName);
+            default:
+                throw new UnsupportedOperationException(String.format(Locale.US,
+                        "Reading from %s methods is not supported.", method));
         }
     }
 
